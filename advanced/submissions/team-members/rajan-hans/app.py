@@ -187,7 +187,7 @@ BINARY_FEATURES = [
 
 # Numeric inputs (no SleepTime in this schema)
 NUMERIC_FEATURES = [
-    ("BMI", "Body Mass Index (BMI)", 10.0, 60.0, 0.1, 27.5),
+    ("BMI", "Body Mass Index (BMI)", 10.0, 60.0, 0.5, 27.5),
     ("PhysHlth", "Physical health not good (days, last 30)", 0, 30, 1, 0),
     ("MentHlth", "Mental health not good (days, last 30)", 0, 30, 1, 0),
 ]
@@ -283,7 +283,7 @@ st.sidebar.header("⚙️ Model")
 model_path = st.sidebar.text_input("Checkpoint (.pt/.pth) path", value="best_model.pt")
 model_upl = st.sidebar.file_uploader("...or upload .pt/.pth", type=["pt", "pth"])
 threshold = st.sidebar.slider(
-    "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.50, 0.01
+    "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.35, 0.01
 )
 
 st.sidebar.markdown("---")
@@ -371,13 +371,11 @@ except Exception as e:
 # ----------------------------
 st.markdown("### Enter Patient Information")
 
-age_years = int(
-edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=4)
-inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=7)
 
 # --- Binary radios in 2 columns, compact ---
 colA, colB = st.columns(2)
 raw = {}
+
 for i, (key, label) in enumerate(BINARY_FEATURES):
     col = colA if i % 2 == 0 else colB
     choice = col.radio(
@@ -386,30 +384,30 @@ for i, (key, label) in enumerate(BINARY_FEATURES):
         index=0,
         horizontal=True,
         key=f"bin_{key}",
-        label_visibility="collapsed"
     )
     raw[key] = choice[1]
 
 # Sex (binary 0/1)
+
 sex_choice = colA.radio(
-    "Sex",
-    options=[("Female", 0), ("Male", 1)],
-    index=1,
-    horizontal=True,
-    key="bin_Sex",
-    label_visibility="collapsed"
+    "Sex", options=[("Female", 0), ("Male", 1)], index=1, horizontal=True, key="bin_Sex"
 )
 raw["Sex"] = sex_choice[1]
 
 # --- Group all numeric sliders together ---
 with st.expander("Numeric Inputs", expanded=True):
     for key, label, lo, hi, step, default in NUMERIC_FEATURES:
+        # Set custom defaults for PhysHlth and MentHlth
+        if key == "PhysHlth" or key == "MentHlth":
+            default_val = 15
+        else:
+            default_val = default
         if isinstance(step, float):
             raw[key] = st.number_input(
                 label,
                 min_value=float(lo),
                 max_value=float(hi),
-                value=float(default),
+                value=float(default_val),
                 step=float(step),
                 key=f"num_{key}",
             )
@@ -418,7 +416,7 @@ with st.expander("Numeric Inputs", expanded=True):
                 label,
                 min_value=int(lo),
                 max_value=int(hi),
-                value=int(default),
+                value=int(default_val),
                 step=int(step),
                 key=f"num_{key}",
             )
@@ -432,12 +430,12 @@ raw["GenHlth"] = gen_val
 # Age, Education, Income in columns as before
 c1, c2, c3 = st.columns(3)
 age_years = int(
-    c1.number_input("Age (years)", min_value=18, max_value=120, value=45, step=1)
+    c1.number_input("Age (years)", min_value=18, max_value=120, value=50, step=1)
 )
 raw["Age"] = age_years_to_cat_ordinal(age_years)
-edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=4)
+edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=3)
 raw["Education"] = edu_val
-inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=7)
+inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=3)
 raw["Income"] = inc_val
 
 
@@ -474,7 +472,10 @@ with st.expander("🔎 Preview numeric vector (order must match training)"):
 # Predict
 if st.button("Predict"):
     try:
-        vec, _, _ = build_vector(raw, FEATURE_ORDER, scaler=SCALER)
+        vec, names, vals = build_vector(raw, FEATURE_ORDER, scaler=SCALER)
+        # st.write("**Debug: Model Input Vector**")
+        # st.dataframe(pd.DataFrame({"feature": names, "value": vals}))
+        # st.write(f"Shape: {vec.shape}, Input Dim: {input_dim}")
         if vec.shape[1] != input_dim:
             st.error(
                 f"Vector length {vec.shape[1]} ≠ model input_dim {input_dim}. "
@@ -482,10 +483,29 @@ if st.button("Predict"):
             )
         else:
             label, prob, logit = predict_single(model, vec, threshold)
+            # st.write(
+            #     f"**Debug: Model Output** | Label: {label} | Probability: {prob:.4f} | Logit: {logit:.4f} | Threshold: {threshold}"
+            # )
             outcome = "Diabetic (1)" if label == 1 else "Non-diabetic (0)"
-            st.success(
-                f"Prediction: **{outcome}**  |  Probability: **{prob:.4f}**  (logit={logit:.4f}, thr={threshold:.2f})"
-            )
+            pred_text = f"Prediction: <b>{outcome}</b>  |  Probability: <b>{prob:.4f}</b>  (logit={logit:.4f}, thr={threshold:.2f})"
+            if label == 1:
+                st.markdown(
+                    f"""
+                    <div style='background-color:#ffcccc;padding:1em;border-radius:8px;font-weight:bold;font-size:1.1em;'>
+                        {pred_text}
+                    </div>
+                """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style='background-color:#d4edda;padding:1em;border-radius:8px;font-weight:bold;font-size:1.1em;'>
+                        {pred_text}
+                    </div>
+                """,
+                    unsafe_allow_html=True,
+                )
     except Exception as e:
         st.exception(e)
 
