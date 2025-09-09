@@ -2,3 +2,11 @@
 *.old
 .venv
 archive/
+# Ignore all .pt files
+*.pt
+# BUT keep best_model.pt
+!best_model.pt
+mlflow_logs
+*.pth
+checkpoints/
+artifacts_aligned/
