@@ -371,57 +371,42 @@ except Exception as e:
 # ----------------------------
 st.markdown("### Enter Patient Information")
 
-age_years = int(
-edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=4)
-inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=7)
-
-# --- Binary radios in 2 columns, compact ---
 colA, colB = st.columns(2)
 raw = {}
-for i, (key, label) in enumerate(BINARY_FEATURES):
-    col = colA if i % 2 == 0 else colB
-    choice = col.radio(
-        label,
-        options=[("No", 0), ("Yes", 1)],
-        index=0,
-        horizontal=True,
-        key=f"bin_{key}",
-        label_visibility="collapsed"
+
+# Binary radios (0/1)
+for key, label in BINARY_FEATURES:
+    choice = colA.radio(
+        label, options=["No (0)", "Yes (1)"], index=0, horizontal=True, key=f"bin_{key}"
     )
-    raw[key] = choice[1]
+    raw[key] = 1 if "Yes" in choice else 0
 
-# Sex (binary 0/1)
+# Sex (binary 0/1) — common BRFSS: 0=Female, 1=Male
 sex_choice = colA.radio(
-    "Sex",
-    options=[("Female", 0), ("Male", 1)],
-    index=1,
-    horizontal=True,
-    key="bin_Sex",
-    label_visibility="collapsed"
+    "Sex", options=["Female (0)", "Male (1)"], index=1, horizontal=True, key="bin_Sex"
 )
-raw["Sex"] = sex_choice[1]
+raw["Sex"] = 1 if "Male" in sex_choice else 0
 
-# --- Group all numeric sliders together ---
-with st.expander("Numeric Inputs", expanded=True):
-    for key, label, lo, hi, step, default in NUMERIC_FEATURES:
-        if isinstance(step, float):
-            raw[key] = st.number_input(
-                label,
-                min_value=float(lo),
-                max_value=float(hi),
-                value=float(default),
-                step=float(step),
-                key=f"num_{key}",
-            )
-        else:
-            raw[key] = st.slider(
-                label,
-                min_value=int(lo),
-                max_value=int(hi),
-                value=int(default),
-                step=int(step),
-                key=f"num_{key}",
-            )
+# Numeric inputs
+for key, label, lo, hi, step, default in NUMERIC_FEATURES:
+    if isinstance(step, float):
+        raw[key] = colB.number_input(
+            label,
+            min_value=float(lo),
+            max_value=float(hi),
+            value=float(default),
+            step=float(step),
+            key=f"num_{key}",
+        )
+    else:
+        raw[key] = colB.slider(
+            label,
+            min_value=int(lo),
+            max_value=int(hi),
+            value=int(default),
+            step=int(step),
+            key=f"num_{key}",
+        )
 
 # GenHlth (1..5)
 gen_label, gen_val = st.selectbox(
@@ -429,14 +414,18 @@ gen_label, gen_val = st.selectbox(
 )
 raw["GenHlth"] = gen_val
 
-# Age, Education, Income in columns as before
+# Age (years) → Age ordinal 1..13
 c1, c2, c3 = st.columns(3)
 age_years = int(
     c1.number_input("Age (years)", min_value=18, max_value=120, value=45, step=1)
 )
 raw["Age"] = age_years_to_cat_ordinal(age_years)
+
+# Education (1..6)
 edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=4)
 raw["Education"] = edu_val
+
+# Income (1..8)
 inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=7)
 raw["Income"] = inc_val
 
