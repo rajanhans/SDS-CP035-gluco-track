@@ -192,7 +192,123 @@ Logged runs (via MLflow):
 
 ## ✅ Week 4: Tuning & Finalization (Preview)
 
-- **Tuning plan:** Grid/Random search for GB (n_estimators, learning_rate, max_depth, subsample), LR (C, penalty, class_weight), RF (n_estimators, max_depth, max_features).  
-- **Cross-validation:** Stratified K-fold to verify stability across folds; watch variance.  
-- **Feature importance:** GB feature importances/SHAP for interpretability; confirm alignment with domain knowledge (GenHlth, BMI, HighBP/Chol, activity).
+## 🛠️ 1. Hyperparameter Tuning
+
+**Q: Which hyperparameters did you tune for your models, and what methods (e.g., grid search, random search) did you use?**
+A: 
+For Gradient Boosting, the hyperparameters tuned were n_estimators, learning_rate, and max_depth.
+For Logistic Regression, the hyperparameter tuned was C.
+For Random Forest, the hyperparameters tuned were n_estimators and max_depth.
+The method used for hyperparameter tuning for all three models was Grid Search with 5-fold Stratified Cross-Validation.
+
+![alt text](image-3.png)
+
+**Q: How did you select the range or values for each hyperparameter?**
+A:
+The ranges or values for each hyperparameter were selected based on common practices and a starting point for exploring the parameter space for each specific algorithm. They represent a small subset of possible values to demonstrate the tuning process within a reasonable computation time. For a more exhaustive search, wider ranges and potentially more values would be explored.
+Gradient Boosting: n_estimators (100, 200) for exploring the impact of more trees; learning_rate (0.01, 0.1) for different step sizes; max_depth (3, 4) for controlling tree complexity.
+Logistic Regression: C (0.1, 1.0, 10.0) to explore different levels of regularization strength (smaller values mean stronger regularization).
+Random Forest: n_estimators (100, 200) for different numbers of trees; max_depth (10, 20) for controlling tree depth.
+
+**Q: What impact did hyperparameter tuning have on your model’s performance?**
+A:
+Gradient Boosting: Tuning led to slight increases in Accuracy, Precision, F1-score, and AUC on the test set compared to the initial model, but a decrease in Recall.
+Logistic Regression: Tuning resulted in very minimal changes across most metrics on the test set, suggesting that the default hyperparameters (or those used initially) were already close to the optimal within the defined grid, or the grid was too limited to show a significant impact.
+Random Forest: Tuning resulted in a decrease in Accuracy, Precision, F1-score, and AUC on the test set, but a significant increase in Recall. This indicates a trade-off where the tuned model is better at identifying positive cases but at the cost of overall accuracy and precision within this specific parameter search.
+
+## 🔄 2. Cross-Validation
+**Q: How did you use cross-validation to assess model stability and generalization?**
+A:  cross-validation was a key part of the hyperparameter tuning process to find generalized parameters, and its use provided some implicit insights into stability across training folds.
+
+
+**Q: What were the results of your cross-validation, and did you observe any variance across folds?**
+A:Cross-validation Results for Best Tuned Models:
+
+Gradient Boosting:
+  Best parameters: {'learning_rate': 0.1, 'max_depth': 4, 'n_estimators': 200}
+  Mean cross-validation recall: 0.8037
+  Standard deviation of cross-validation recall: 0.0036
+
+Logistic Regression:
+  Best parameters: {'C': 0.1, 'penalty': 'l2'}
+  Mean cross-validation recall: 0.7771
+  Standard deviation of cross-validation recall: 0.0023
+
+Random Forest:
+  Best parameters: {'max_depth': 20, 'n_estimators': 200}
+  Mean cross-validation recall: 0.8975
+  Standard deviation of cross-validation recall: 0.0021
+
+Observation on Variance Across Folds:
+A smaller standard deviation relative to the mean indicates less variance across the cross-validation folds, suggesting better model stability and more reliable performance estimates on unseen data.
+Based on the standard deviations above, you can observe the degree of variance in recall performance across the 5 cross-validation folds for each of the best tuned models.
+
+**Q: Why is cross-validation important in this context?**
+A: In the context of this diabetes prediction task, where the dataset might have underlying complexities and potential imbalances, using cross-validation helps ensure that the performance metrics we obtain are not just a result of a lucky data split but are more representative of the model's true capability to generalize to new patients' data. It gives us more confidence in the chosen model and hyperparameters.
+
+## 🏆 3. Final Model Selection
+**Q: How did you choose your final model after tuning and validation?**
+A: Considering the critical need for high Recall in this application, the Tuned Gradient Boosting model was identified as the most suitable choice among the evaluated models because it achieved the highest Recall while also maintaining a strong F1-score and AUC, indicating a good balance of performance relevant to the problem.
+
+**Q: Did you retrain your final model on the full training set before evaluating on the test set? Why or why not?**
+A: while the best hyperparameters were identified using cross-validation on the training data, the final models were not explicitly retrained on the full training set before evaluating on the test set in this notebook. This is a deviation from a common best practice aimed at maximizing the model's performance using all available training data.
+
+**Q: What were the final test set results, and how do they compare to your validation results?**
+A: Final Test Set Results (from metrics_df):
+                            ROC AUC  	PR AUC	   F1 (Macro)	Balanced Accuracy	Accuracy	Precision	Recall	F1-score	AUC
+Logistic Regression	        0.787777    0.337009    0.619486	      0.716043	           NaN	     NaN	     NaN	 NaN	    NaN
+Random Forest	            0.753711    0.280562    0.618815	      0.648228	           NaN	     NaN	     NaN	 NaN	    NaN
+XGBoost                 	0.782618    0.335176    0.616632	      0.706232	           NaN	     NaN         NaN	 NaN        NaN
+Gradient Boosting (Tuned)	  NaN	     NaN	     NaN	         NaN	         0.723786   0.295193	0.7080  0.41666    0.717179
+Logistic Regression (Tuned)   NaN	     NaN	     NaN	         NaN	         0.727097	0.296962	0.7010	0.417207   0.716198
+Random Forest (Tuned)	      NaN	     NaN	     NaN	         NaN             0.758436	0.309847	0.5978	0.408151   0.691129
+
+Cross-validation Results for Best Tuned Models (from cv_results_df):
+
+                              Best Parameters	                               Mean CV Recall	   Std Dev CV Recall
+Gradient Boosting (Tuned)	 {'learning_rate': 0.1, 'max_depth': 4, 'n_esti...	 0.803661	         0.003619
+Logistic Regression (Tuned)  {'C': 0.1, 'penalty': 'l2'}	                     0.777107	         0.002254
+Random Forest (Tuned)	     {'max_depth': 20, 'n_estimators': 200}              0.897519	         0.002102
+
+while cross-validation provided an estimate of performance during tuning, the final test set results offer the most realistic measure of how the tuned models are expected to perform on new, unseen data. The observed drops in performance highlight the importance of having a separate, untouched test set for final evaluation.
+
+## 📊 4. Feature Importance & Interpretation
+
+**Q: How did you assess feature importance for your final model?**
+A: For tree-based models like Gradient Boosting, we can access the feature_importances_ attribute after the model has been trained. This attribute provides a numerical score for each feature, indicating its relative importance in the model's decision-making process. 
+
+**Q: Which features were most influential in predicting diabetes risk, and do these results align with domain knowledge?**
+A:
+Feature Importances for Tuned Gradient Boosting Model:
+GenHlth                    0.313986
+HighBP                     0.149589
+Age                        0.114815
+BMI_category_Normal        0.106818
+BMI_category_Overweight    0.064931
+HvyAlcoholConsump          0.039628
+Income                     0.033734
+PhysActivity               0.029984
+BMI_category_Obese         0.027193
+HighChol                   0.023692
+NoDocbcCost                0.018038
+Education                  0.016177
+TotalHealthDays            0.011958
+Fruits                     0.011690
+Smoker                     0.009383
+CholCheck                  0.008054
+Sex                        0.007266
+Stroke                     0.004465
+DiffWalk                   0.003309
+Veggies                    0.002634
+HeartDiseaseorAttack       0.001907
+AnyHealthcare              0.000750
+
+The most influential features identified by the tuned Gradient Boosting model – particularly General Health, High Blood Pressure, Age, and BMI category – strongly align with established medical domain knowledge about key risk factors for diabetes. This increases confidence in the model's ability to capture meaningful relationships in the data.
+
+
+**Q: How would you explain your model’s decision process to a non-technical audience?**
+A: In simple terms, our model is like an expert that uses a weighted checklist of health factors to calculate a risk score, and then predicts your diabetes risk based on that score. The factors that get the most "weight" on the checklist are the ones we identified as most influential.
+
+It's important to remember that this is a prediction based on the data it learned from, not a definitive diagnosis. It's a tool to help identify individuals who might be at higher risk and could benefit from further medical evaluation.
+
 
