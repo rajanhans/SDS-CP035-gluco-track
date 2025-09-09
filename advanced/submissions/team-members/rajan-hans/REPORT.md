@@ -80,6 +80,8 @@
 **A:** Notebook reports **(253,680 rows × 24 columns)** with 0 missing and 0 duplicates. For modeling, we will **drop `ID`**, yielding **23 features + 1 target** (24 columns total during training artifacts).
 
 
+__________________________________________________________________________________________________________
+
 
 ## ✅ Week 2: Feature Engineering & Deep Learning Prep
 
@@ -196,3 +198,117 @@ The labels (y) in one batch have shape [64, 1].
 A:The shuffle parameter in your training DataLoader randomizes the order of samples in each epoch. This is important for the training set because it prevents the model from learning patterns based on the order of the data, improves generalization, and helps avoid overfitting. Shuffling ensures that each batch contains a diverse mix of samples, which leads to more stable and effective gradient updates.
 
 For validation and testing sets, shuffling is not needed because you want to evaluate the model on a fixed, consistent set of data. Keeping the order unchanged ensures reproducible and reliable performance metrics.
+__________________________________________________________________________________________________________
+
+✅ Week 3: Neural Network Design & Baseline Training
+
+🏗️ 1. Neural Network Architecture
+Q: How did you design your baseline Feedforward Neural Network (FFNN) architecture?
+A:I designed the FFNN for binary diabetes prediction on tabular data.
+Inputs: Numeric features (standardized) plus integer-encoded categorical features (GenHlth, Age, Education, Income).
+Architecture: Two hidden layers (256 → 128 units), each with BatchNorm → ReLU → Dropout (0.2), followed by a single-logit output layer for BCEWithLogitsLoss.
+Imbalance handling: Used pos_weight in the loss to balance minority (positive) cases.
+Optimization: AdamW with weight decay, combined with a OneCycleLR scheduler for stable convergence.
+Regularization: Dropout, batch norm, early stopping with best-model checkpointing.
+Evaluation: Accuracy, precision, recall, F1, AUC/PR-AUC, and MCC. Decision threshold tuned on the validation set (not fixed at 0.5) to maximize F1.
+This setup provides a simple but robust baseline, handling class imbalance, stabilizing training, and leaving room to extend with categorical embeddings or other enhancements later.
+
+Q: What was your rationale for the number of layers, units per layer, and activation functions used?
+A: Used two hidden layers with 256 and 128 units in a funnel shape, with ReLU activations, to give enough capacity for non-linear patterns while keeping the model lightweight and avoiding overfitting.
+
+Q: How did you incorporate Dropout, Batch Normalization, and ReLU in your model, and why are these components important?
+A: Batch Normalization was applied right after the linear layer to stabilize feature distributions, speed up convergence, and reduce sensitivity to initialization.
+ReLU was then used as the activation because it’s computationally efficient, avoids vanishing gradients, and works well with BatchNorm in dense networks.
+Dropout (p=0.2) was added after ReLU to prevent overfitting by randomly zeroing neurons during training, encouraging the network to learn more robust representations.
+
+⚙️ 2. Model Training & Optimization
+Q: Which loss function and optimizer did you use for training, and why are they suitable for this binary classification task?
+A: used BCEWithLogitsLoss with a pos_weight for class imbalance, and AdamW with a OneCycleLR scheduler for stable and efficient optimization in binary classification.
+
+
+Q: How did you monitor and control overfitting during training?
+A: I monitored training vs. validation loss and metrics (accuracy, F1, AUC, PR-AUC) in each epoch to detect divergence. To control overfitting, I combined several techniques:
+Dropout (0.2) to reduce reliance on specific neurons.
+Batch Normalization to stabilize activations and reduce internal covariate shift.
+Weight decay (AdamW) to penalize overly large weights.
+Early stopping with patience to halt training when validation loss stopped improving.
+Best model checkpointing so only the best-performing weights on the validation set were retained.
+
+Q: What challenges did you face during training (e.g., convergence, instability), and how did you address them?
+A: I faced class imbalance, overfitting, and unstable convergence; I solved these with pos_weight in the loss, Dropout/BatchNorm/weight decay plus early stopping, and a OneCycleLR scheduler for smoother training
+
+📈 3. Experiment Tracking
+Q: How did you use MLflow (or another tool) to track your deep learning experiments?
+A:
+
+Q: What parameters, metrics, and artifacts did you log for each run?
+A:
+
+Q: How did experiment tracking help you compare different architectures and training strategies?
+A:
+
+🧮 4. Model Evaluation
+Q: Which metrics did you use to evaluate your neural network, and why are they appropriate for this problem?
+A: I used AUC, PR-AUC, F1, precision, recall in addition to accuracy, since these better capture performance under class imbalance than accuracy alone
+
+Q: How did you interpret the Accuracy, Precision, Recall, F1-score, and AUC results?
+A:Accuracy (~53%): Close to random guessing (50%) due to class imbalance. It showed that accuracy alone was not meaningful for this problem.
+Precision (~0.16): Of all the cases predicted as diabetes-positive, only ~16% were correct. This indicated a high false-positive rate.
+Recall (~0.48): The model caught about 48% of the actual positive cases. So, while recall was better than chance, the model still missed more than half of the positives.
+F1-score (~0.24): The harmonic mean of precision and recall highlighted that the overall balance between catching positives and avoiding false alarms was still weak.
+AUC (~0.51): Very close to 0.5, which is the performance of a random classifier. This confirmed that the model was struggling to learn meaningful discriminative patterns.
+
+Q: Did you observe any trade-offs between metrics, and how did you decide which to prioritize?
+A: I observed the usual precision–recall trade-off; since recall matters more in detecting diabetes, I prioritized F1 and PR-AUC over accuracy
+
+🕵️ 5. Error Analysis
+Q: How did you use confusion matrices or ROC curves to analyze your model’s errors?
+A:
+
+Q: What types of misclassifications were most common, and what might explain them?
+A:
+
+Q: How did your error analysis inform your next steps in model improvement?
+A:
+
+📝 6. Model Selection & Insights
+Q: Based on your experiments, which neural network configuration performed best and why?
+A:
+
+Q: What are your top 3–5 insights from neural network development and experimentation?
+A:
+
+Q: How would you communicate your model’s strengths and limitations to a non-technical stakeholder?
+A:
+
+__________________________________________________________________________________________________________
+✅ Week 4: Model Tuning & Explainability
+
+🛠️ 1. Model Tuning & Optimization
+Q: Which hyperparameters did you tune for your neural network, and what strategies (e.g., grid search, random search) did you use?
+A:
+
+Q: How did you implement early stopping or learning rate scheduling, and what impact did these techniques have on your training process?
+A:
+
+Q: What evidence did you use to determine your model was sufficiently optimized and not overfitting?
+A:
+
+🧑‍🔬 2. Model Explainability
+Q: Which explainability technique(s) (e.g., SHAP, LIME, Integrated Gradients) did you use, and why did you choose them?
+A:
+
+Q: How did you apply these techniques to interpret your model’s predictions?
+A:
+
+Q: What were the most influential features according to your explainability analysis, and how do these findings align with domain knowledge?
+A:
+
+📊 3. Visualization & Communication
+Q: How did you visualize feature contributions and model explanations for stakeholders?
+A:
+
+Q: What challenges did you encounter when interpreting or presenting model explanations?
+A:
+
+Q: How would you summarize your model’s interpretability and reliability to a non-technical audience?

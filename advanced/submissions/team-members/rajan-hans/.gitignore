@@ -2,3 +2,8 @@
 *.old
 .venv
 archive/
+*.pt
+mlflow_logs
+*.pth
+checkpoints/
+artifacts_aligned/
