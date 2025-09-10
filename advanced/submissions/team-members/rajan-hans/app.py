@@ -284,7 +284,10 @@ SCALER_JSON_DEFAULT = ""
 # Sidebar: model, threshold, fallback arch, optional scaling
 # ----------------------------
 st.sidebar.header("⚙️ Model")
-model_path = st.sidebar.text_input("Checkpoint (.pt/.pth) path", value="best_model.pt")
+model_path = st.sidebar.text_input(
+    "Checkpoint (.pt/.pth) path",
+    value="\\advanced\\submissions\\team-members\\rajan-hans\\best_model.pt",
+)
 model_upl = st.sidebar.file_uploader("...or upload .pt/.pth", type=["pt", "pth"])
 threshold = st.sidebar.slider(
     "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.35, 0.01
@@ -468,7 +471,7 @@ with st.expander("🔎 Preview numeric vector (order must match training)"):
     try:
         vec, names, vals = build_vector(raw, FEATURE_ORDER, scaler=SCALER)
         df_preview = pd.DataFrame({"feature": names, "value": vals})
-        st.dataframe(df_preview, use_container_width=True)
+        st.dataframe(df_preview, width="stretch")
         st.caption(f"Vector length = {vec.shape[1]}  |  model input_dim = {input_dim}")
     except Exception as e:
         st.error(str(e))
