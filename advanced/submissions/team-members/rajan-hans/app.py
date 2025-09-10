@@ -79,9 +79,11 @@ def load_model(
     Returns (model, meta)
     """
     if hasattr(pt_path_or_upl, "read"):  # uploaded file
-        raw = torch.load(io.BytesIO(pt_path_or_upl.read()), map_location="cpu")
+        raw = torch.load(
+            io.BytesIO(pt_path_or_upl.read()), map_location="cpu", weights_only=False
+        )
     else:
-        raw = torch.load(pt_path_or_upl, map_location="cpu")
+        raw = torch.load(pt_path_or_upl, map_location="cpu", weights_only=False)
 
     meta = {}
     # Case 1: checkpoint dict
