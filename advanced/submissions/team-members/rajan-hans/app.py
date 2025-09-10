@@ -383,6 +383,13 @@ except Exception as e:
 
 # Friendly input form (radios/sliders/selects) grouped by section
 st.markdown("### Enter Patient Information")
+st.markdown(
+    '<div style="font-size:0.85em;color:#b30000;margin-bottom:1em;">'
+    "This is a screening tool that generates the probability of Diabetes or not solely on a Machine Learning model trained on the CDC BRFSS 2014 data. "
+    "This is not a substitute for medical diagnosis. If you have any health concerns please consult your physician."
+    "</div>",
+    unsafe_allow_html=True,
+)
 raw = {}
 
 # 1. Cardiovascular Health
