@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 import streamlit as st
 import os
+import os
 
 st.set_page_config(
     page_title="Diabetes Risk Predictor", page_icon="🩺", layout="centered"
@@ -284,9 +285,11 @@ SCALER_JSON_DEFAULT = ""
 # Sidebar: model, threshold, fallback arch, optional scaling
 # ----------------------------
 st.sidebar.header("⚙️ Model")
+# Always resolve model path relative to this script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_model_path = os.path.join(script_dir, "best_model.pt")
 model_path = st.sidebar.text_input(
-    "Checkpoint (.pt/.pth) path",
-    value="\\advanced\\submissions\\team-members\\rajan-hans\\best_model.pt",
+    "Checkpoint (.pt/.pth) path", value=default_model_path
 )
 model_upl = st.sidebar.file_uploader("...or upload .pt/.pth", type=["pt", "pth"])
 threshold = st.sidebar.slider(
