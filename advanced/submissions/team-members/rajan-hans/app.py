@@ -12,11 +12,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import streamlit as st
+import os
 
 st.set_page_config(
     page_title="Diabetes Risk Predictor", page_icon="🩺", layout="centered"
 )
 st.title("🩺 Diabetes Risk Predictor (CDC 21 Features)")
+st.write("Files in current directory:", os.listdir("."))
 
 
 # ----------------------------
