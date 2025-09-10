@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="Diabetes Risk Predictor", page_icon="🩺", layout="centered"
 )
 st.title("🩺 Diabetes Risk Predictor (CDC 21 Features)")
-st.write("Files in current directory:", os.listdir("."))
+# st.write("Files in current directory:", os.listdir("."))
 
 
 # ----------------------------
@@ -287,10 +287,13 @@ SCALER_JSON_DEFAULT = ""
 st.sidebar.header("⚙️ Model")
 # Always resolve model path relative to this script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
-default_model_path = os.path.join(script_dir, "best_model.pt")
-model_path = st.sidebar.text_input(
-    "Checkpoint (.pt/.pth) path", value=default_model_path
+default_model_name = "best_model.pt"
+default_model_path = os.path.join(script_dir, default_model_name)
+# Show only the model name in the sidebar, but use the full path for loading
+model_name = st.sidebar.text_input(
+    "Checkpoint (.pt/.pth) name", value=default_model_name
 )
+model_path = os.path.join(script_dir, model_name)
 model_upl = st.sidebar.file_uploader("...or upload .pt/.pth", type=["pt", "pth"])
 threshold = st.sidebar.slider(
     "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.35, 0.01
