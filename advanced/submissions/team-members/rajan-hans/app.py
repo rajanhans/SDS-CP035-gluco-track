@@ -380,76 +380,198 @@ except Exception as e:
     st.stop()
 
 # ----------------------------
-# Friendly input form (radios/sliders/selects)
-# ----------------------------
+
+# Friendly input form (radios/sliders/selects) grouped by section
 st.markdown("### Enter Patient Information")
-
-
-# --- Binary radios in 2 columns, compact ---
-colA, colB = st.columns(2)
 raw = {}
 
-for i, (key, label) in enumerate(BINARY_FEATURES):
-    col = colA if i % 2 == 0 else colB
-    choice = col.radio(
-        label,
-        options=[("No", 0), ("Yes", 1)],
-        index=0,
-        horizontal=True,
-        key=f"bin_{key}",
+# 1. Cardiovascular Health
+with st.expander("Cardiovascular Health", expanded=True):
+    col1, col2 = st.columns(2)
+    raw["HighBP"] = (
+        1
+        if col1.radio(
+            "High blood pressure diagnosed?", ["No", "Yes"], index=0, key="bin_HighBP"
+        )
+        == "Yes"
+        else 0
     )
-    raw[key] = choice[1]
+    raw["HighChol"] = (
+        1
+        if col2.radio(
+            "High cholesterol diagnosed?", ["No", "Yes"], index=0, key="bin_HighChol"
+        )
+        == "Yes"
+        else 0
+    )
+    raw["CholCheck"] = (
+        1
+        if col1.radio(
+            "Had cholesterol check in past 5 years?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_CholCheck",
+        )
+        == "Yes"
+        else 0
+    )
+    raw["Stroke"] = (
+        1
+        if col2.radio(
+            "Ever told you had a stroke?", ["No", "Yes"], index=0, key="bin_Stroke"
+        )
+        == "Yes"
+        else 0
+    )
+    raw["HeartDiseaseorAttack"] = (
+        1
+        if col1.radio(
+            "Coronary heart disease or myocardial infarction?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_HeartDiseaseorAttack",
+        )
+        == "Yes"
+        else 0
+    )
 
-# Sex (binary 0/1)
+# 2. Physical Health
+with st.expander("Physical Health", expanded=True):
+    col1, col2 = st.columns(2)
+    raw["BMI"] = col1.number_input(
+        "Body Mass Index (BMI)",
+        min_value=10.0,
+        max_value=60.0,
+        value=27.5,
+        step=0.5,
+        key="num_BMI",
+    )
+    raw["PhysActivity"] = (
+        1
+        if col2.radio(
+            "Any physical activity in past 30 days (not job)?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_PhysActivity",
+        )
+        == "Yes"
+        else 0
+    )
+    raw["DiffWalk"] = (
+        1
+        if col1.radio(
+            "Serious difficulty walking/climbing stairs?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_DiffWalk",
+        )
+        == "Yes"
+        else 0
+    )
+    raw["PhysHlth"] = col2.slider(
+        "Physical health not good (days, last 30)",
+        min_value=0,
+        max_value=30,
+        value=15,
+        step=1,
+        key="num_PhysHlth",
+    )
 
-sex_choice = colA.radio(
-    "Sex", options=[("Female", 0), ("Male", 1)], index=1, horizontal=True, key="bin_Sex"
-)
-raw["Sex"] = sex_choice[1]
+# 3. Lifestyle Factors
+with st.expander("Lifestyle Factors", expanded=True):
+    col1, col2 = st.columns(2)
+    raw["Smoker"] = (
+        1
+        if col1.radio(
+            "Smoked ≥100 cigarettes in lifetime?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_Smoker",
+        )
+        == "Yes"
+        else 0
+    )
+    raw["HvyAlcoholConsump"] = (
+        1
+        if col2.radio(
+            "Heavy alcohol consumption?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_HvyAlcoholConsump",
+        )
+        == "Yes"
+        else 0
+    )
+    raw["Fruits"] = (
+        1
+        if col1.radio(
+            "Consume fruit ≥1 time/day?", ["No", "Yes"], index=0, key="bin_Fruits"
+        )
+        == "Yes"
+        else 0
+    )
+    raw["Veggies"] = (
+        1
+        if col2.radio(
+            "Consume vegetables ≥1 time/day?", ["No", "Yes"], index=0, key="bin_Veggies"
+        )
+        == "Yes"
+        else 0
+    )
 
-# --- Group all numeric sliders together ---
-with st.expander("Numeric Inputs", expanded=True):
-    for key, label, lo, hi, step, default in NUMERIC_FEATURES:
-        # Set custom defaults for PhysHlth and MentHlth
-        if key == "PhysHlth" or key == "MentHlth":
-            default_val = 15
-        else:
-            default_val = default
-        if isinstance(step, float):
-            raw[key] = st.number_input(
-                label,
-                min_value=float(lo),
-                max_value=float(hi),
-                value=float(default_val),
-                step=float(step),
-                key=f"num_{key}",
-            )
-        else:
-            raw[key] = st.slider(
-                label,
-                min_value=int(lo),
-                max_value=int(hi),
-                value=int(default_val),
-                step=int(step),
-                key=f"num_{key}",
-            )
+# 4. General Health
+with st.expander("General Health", expanded=True):
+    gen_label, gen_val = st.selectbox(
+        "General Health (1=Excellent .. 5=Poor)", GENHLTH_OPTIONS, index=2
+    )
+    raw["GenHlth"] = gen_val
+    raw["MentHlth"] = st.slider(
+        "Mental health not good (days, last 30)",
+        min_value=0,
+        max_value=30,
+        value=15,
+        step=1,
+        key="num_MentHlth",
+    )
 
-# GenHlth (1..5)
-gen_label, gen_val = st.selectbox(
-    "General Health (1=Excellent .. 5=Poor)", GENHLTH_OPTIONS, index=2
-)
-raw["GenHlth"] = gen_val
+# 5. Healthcare Access
+with st.expander("Healthcare Access", expanded=True):
+    col1, col2 = st.columns(2)
+    raw["AnyHealthcare"] = (
+        1
+        if col1.radio(
+            "Any health care coverage?", ["No", "Yes"], index=0, key="bin_AnyHealthcare"
+        )
+        == "Yes"
+        else 0
+    )
+    raw["NoDocbcCost"] = (
+        1
+        if col2.radio(
+            "Couldn’t see doctor because of cost?",
+            ["No", "Yes"],
+            index=0,
+            key="bin_NoDocbcCost",
+        )
+        == "Yes"
+        else 0
+    )
 
-# Age, Education, Income in columns as before
-c1, c2, c3 = st.columns(3)
-age_years = int(
-    c1.number_input("Age (years)", min_value=18, max_value=120, value=50, step=1)
-)
-raw["Age"] = age_years_to_cat_ordinal(age_years)
-edu_label, edu_val = c2.selectbox("Education level", EDU_OPTIONS, index=3)
-raw["Education"] = edu_val
-inc_label, inc_val = c3.selectbox("Household income", INCOME_OPTIONS, index=3)
-raw["Income"] = inc_val
+# 6. Demographics
+with st.expander("Demographics", expanded=True):
+    col1, col2 = st.columns(2)
+    # Sex and Age in first column
+    sex_choice = col1.radio("Sex", ["Female", "Male"], index=1, key="bin_Sex")
+    raw["Sex"] = 1 if sex_choice == "Male" else 0
+    age_years = int(
+        col1.number_input("Age (years)", min_value=18, max_value=120, value=50, step=1)
+    )
+    raw["Age"] = age_years_to_cat_ordinal(age_years)
+    # Education and Income in second column
+    edu_label, edu_val = col2.selectbox("Education level", EDU_OPTIONS, index=3)
+    raw["Education"] = edu_val
+    inc_label, inc_val = col2.selectbox("Household income", INCOME_OPTIONS, index=3)
+    raw["Income"] = inc_val
 
 
 # ----------------------------
