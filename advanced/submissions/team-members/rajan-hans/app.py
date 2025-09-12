@@ -296,7 +296,7 @@ model_name = st.sidebar.text_input(
 model_path = os.path.join(script_dir, model_name)
 model_upl = st.sidebar.file_uploader("...or upload .pt/.pth", type=["pt", "pth"])
 threshold = st.sidebar.slider(
-    "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.35, 0.01
+    "Decision threshold (prob ≥ thr → 1)", 0.05, 0.95, 0.30, 0.01
 )
 
 st.sidebar.markdown("---")
